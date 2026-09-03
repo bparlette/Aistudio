@@ -107,6 +107,9 @@ export function FakeChat({
 
     if (roast) {
       setMessages([line(pick(ROASTS), true), line(pick(ROASTS), true), line("FRAUD", true)]);
+    } else {
+      setMessages([]);
+      lastRankRef.current = null;
     }
 
     const interval = setInterval(

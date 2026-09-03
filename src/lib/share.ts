@@ -111,6 +111,12 @@ export async function shareRun(opts: {
   };
 
   try {
+    await navigator.clipboard.writeText(opts.text);
+  } catch {
+    /* share sheet can still carry the tweet */
+  }
+
+  try {
     if (file && typeof nav.canShare === "function" && nav.canShare({ files: [file] })) {
       await navigator.share({ ...shareData, files: [file] });
       return "shared";
@@ -123,6 +129,5 @@ export async function shareRun(opts: {
     if ((err as { name?: string })?.name === "AbortError") return "copied";
   }
 
-  await navigator.clipboard.writeText(opts.text);
   return "copied";
 }
