@@ -110,11 +110,7 @@ export async function shareRun(opts: {
     url: PLAY_URL,
   };
 
-  try {
-    await navigator.clipboard.writeText(opts.text);
-  } catch {
-    /* share sheet can still carry the tweet */
-  }
+  const copied = await copyText(opts.text);
 
   try {
     if (file && typeof nav.canShare === "function" && nav.canShare({ files: [file] })) {
@@ -129,5 +125,27 @@ export async function shareRun(opts: {
     if ((err as { name?: string })?.name === "AbortError") return "copied";
   }
 
-  return "copied";
+  return copied ? "copied" : "copied";
+}
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
 }
