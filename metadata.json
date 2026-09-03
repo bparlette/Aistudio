@@ -1,0 +1,6 @@
+{
+  "name": "Beach Catch",
+  "description": "A cinematic reaction game where you catch a football on the beach.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
