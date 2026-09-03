@@ -88,10 +88,12 @@ export function FakeChat({
   active,
   roast,
   rank,
+  endScreen,
 }: {
   active: boolean;
   roast?: boolean;
   rank?: Rank | null;
+  endScreen?: boolean;
 }) {
   const [messages, setMessages] = useState<Line[]>([]);
   const lastRankRef = useRef<string | null>(null);
@@ -137,7 +139,11 @@ export function FakeChat({
   }, [active, roast, rank]);
 
   return (
-    <div className="absolute bottom-5 left-3 z-20 w-[62%] max-w-[240px] h-40 overflow-hidden flex flex-col justify-end pointer-events-none">
+    <div
+      className={`absolute left-3 z-20 w-[62%] max-w-[240px] overflow-hidden flex flex-col justify-end pointer-events-none ${
+        endScreen ? "bottom-24 h-24" : "bottom-5 h-40"
+      }`}
+    >
       <AnimatePresence>
         {messages.map((m) => (
           <motion.div

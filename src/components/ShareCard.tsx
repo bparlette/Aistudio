@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "motion/react";
 import { rankForScore, tweetForRun } from "../lib/ranks";
 import { shareRun } from "../lib/share";
@@ -13,6 +13,7 @@ export function ShareCard({
   const rank = rankForScore(score);
   const title = rank?.name ?? "Unsigned";
   const [status, setStatus] = useState<"idle" | "shared" | "copied">("idle");
+  const shareFiredRef = useRef(false);
 
   const onShare = async () => {
     const text = tweetForRun(score, rank);
@@ -30,14 +31,22 @@ export function ShareCard({
     window.setTimeout(() => setStatus("idle"), 2200);
   };
 
+  const triggerShare = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+    if (shareFiredRef.current) return;
+    shareFiredRef.current = true;
+    window.setTimeout(() => {
+      shareFiredRef.current = false;
+    }, 0);
+    void onShare();
+  };
+
   return (
     <motion.button
       type="button"
       data-chrome
-      onClick={(e) => {
-        e.stopPropagation();
-        void onShare();
-      }}
+      onClick={triggerShare}
+      onPointerUp={triggerShare}
       initial={{ opacity: 0, y: 16, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       className="pointer-events-auto mx-auto w-[46%] max-w-[200px] aspect-[9/16] rounded-2xl overflow-hidden border border-white/25 shadow-[0_12px_40px_rgba(0,0,0,0.55)] text-left relative"
