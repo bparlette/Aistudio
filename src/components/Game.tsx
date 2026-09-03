@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Eye, Heart, Settings, Volume2, VolumeX, X } from "lucide-react";
+import { Eye, Heart, Volume2, VolumeX } from "lucide-react";
 import { BeachSimulation } from "./BeachSimulation";
 import { FakeChat } from "./FakeChat";
 import { LiveReactions } from "./LiveReactions";
@@ -47,7 +47,6 @@ export function Game() {
   const [speed, setSpeed] = useState(1);
   const [muted, setMuted] = useState(true);
   const [useSim, setUseSim] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewers, setViewers] = useState(14820);
   const [likes, setLikes] = useState(862);
   const [simProgress, setSimProgress] = useState(0);
@@ -64,6 +63,7 @@ export function Game() {
   const rafRef = useRef<number | null>(null);
   const startLockUntilRef = useRef(0);
   const tapArmedRef = useRef(false);
+  const dropHoldTimerRef = useRef<number | null>(null);
 
   const setPhaseBoth = (p: Phase) => {
     phaseRef.current = p;
@@ -73,6 +73,12 @@ export function Game() {
   useEffect(() => {
     scoreRef.current = score;
   }, [score]);
+
+  useEffect(() => {
+    return () => {
+      if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     speedRef.current = speed;
@@ -91,8 +97,13 @@ export function Game() {
 
   useEffect(() => {
     const tick = setInterval(() => {
+      const p = phaseRef.current;
+      if (p === "dropping" || p === "failed") {
+        setViewers((n) => Math.max(180, n - (18 + Math.floor(Math.random() * 48))));
+        return;
+      }
       setViewers((n) => n + Math.floor(Math.random() * 17) - 4);
-      setLikes((n) => n + (phaseRef.current === "caught" ? 8 + Math.floor(Math.random() * 14) : Math.random() > 0.6 ? 1 : 0));
+      setLikes((n) => n + (p === "caught" ? 8 + Math.floor(Math.random() * 14) : Math.random() > 0.6 ? 1 : 0));
     }, 700);
     return () => clearInterval(tick);
   }, []);
@@ -149,9 +160,25 @@ export function Game() {
     if (!muted) sound.playCatch();
   }, [muted]);
 
+  const holdDropFrame = useCallback(() => {
+    const drop = dropRef.current;
+    if (drop) {
+      drop.pause();
+      const hold = Math.max(0, (Number.isFinite(drop.duration) ? drop.duration : 1.45) - 0.05);
+      try {
+        drop.currentTime = hold;
+      } catch {
+        /* ignore seek race */
+      }
+    }
+    setPhaseBoth("failed");
+  }, []);
+
   const startDrop = useCallback(() => {
     if (phaseRef.current === "dropping" || phaseRef.current === "failed") return;
     pendingDropRef.current = false;
+    setShowTapNow(false);
+    setViewers((n) => Math.max(420, n - (320 + Math.floor(Math.random() * 280))));
     setPhaseBoth("dropping");
     const live = catchRef.current;
     if (live) live.pause();
@@ -161,8 +188,10 @@ export function Game() {
       drop.playbackRate = 1;
       drop.play().catch(() => {});
     }
+    if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+    dropHoldTimerRef.current = window.setTimeout(holdDropFrame, 1650);
     if (!muted) sound.playDrop();
-  }, [muted]);
+  }, [holdDropFrame, muted]);
 
   const failNow = useCallback(() => {
     const live = catchRef.current;
@@ -242,9 +271,10 @@ export function Game() {
 
   const onDropEnded = useCallback(() => {
     if (phaseRef.current === "dropping") {
-      setPhaseBoth("failed");
+      if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+      holdDropFrame();
     }
-  }, []);
+  }, [holdDropFrame]);
 
   // Tight clock: timeupdate is too coarse for a 0.5s window at 2.2x.
   useEffect(() => {
@@ -304,6 +334,7 @@ export function Game() {
   }, [useSim, phase, beginRound, startDrop]);
 
   const showDrop = phase === "dropping" || phase === "failed";
+  const roasting = showDrop;
 
   return (
     <div
@@ -388,14 +419,6 @@ export function Game() {
           >
             {muted ? <VolumeX className="w-4 h-4 text-white/80" /> : <Volume2 className="w-4 h-4" />}
           </button>
-          <button
-            type="button"
-            aria-label="Settings"
-            className="p-1 rounded-full bg-black/30 text-white/50"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings className="w-3.5 h-3.5" />
-          </button>
         </div>
       </div>
 
@@ -412,13 +435,16 @@ export function Game() {
       </div>
 
       <div className="absolute right-3 bottom-28 z-20 pointer-events-none flex flex-col items-center gap-2">
-        <div className="flex flex-col items-center">
+        <div className={`flex flex-col items-center ${roasting ? "opacity-35 grayscale" : ""}`}>
           <Heart className="w-7 h-7 fill-rose-500 text-rose-500 drop-shadow" />
           <span className="text-[11px] font-semibold mt-0.5">{likes}</span>
         </div>
       </div>
 
-      <FakeChat active={phase === "playing" || phase === "caught" || phase === "dropping"} />
+      <FakeChat
+        active={phase === "playing" || phase === "caught" || roasting}
+        roast={roasting}
+      />
       <LiveReactions burst={phase === "caught"} ambient={phase === "playing" || phase === "idle"} />
 
       <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
@@ -490,43 +516,6 @@ export function Game() {
           )}
         </AnimatePresence>
       </div>
-
-      <AnimatePresence>
-        {settingsOpen && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" data-chrome>
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
-              className="bg-neutral-900 border border-white/15 rounded-3xl p-5 w-full max-w-sm"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold">Settings</h3>
-                <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)}>
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-xs text-white/60 leading-relaxed">
-                Source: <span className="text-white/90">public/{CATCH_VIDEO}</span>
-                <br />
-                Catch window: {WINDOW_START.toFixed(2)}s – {WINDOW_END.toFixed(2)}s
-                <br />
-                Round length: {LOOP_DURATION.toFixed(2)}s
-              </p>
-              <button
-                type="button"
-                className="mt-4 w-full py-2.5 rounded-xl bg-white/10 text-sm font-semibold"
-                onClick={() => {
-                  saveBest(0);
-                  setBest(0);
-                }}
-              >
-                Reset best run
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
