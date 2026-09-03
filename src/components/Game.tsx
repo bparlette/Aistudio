@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Eye, Heart, Volume2, VolumeX } from "lucide-react";
 import { BeachSimulation } from "./BeachSimulation";
+import { CatchJuice } from "./CatchJuice";
 import { FakeChat } from "./FakeChat";
 import { LiveReactions } from "./LiveReactions";
 import { sound } from "../lib/audio";
@@ -18,6 +19,8 @@ import {
   WINDOW_END,
   WINDOW_START,
 } from "../lib/timing";
+
+const JUICE_MS = 400;
 
 type Phase = "idle" | "playing" | "caught" | "dropping" | "failed";
 
@@ -51,6 +54,7 @@ export function Game() {
   const [likes, setLikes] = useState(862);
   const [simProgress, setSimProgress] = useState(0);
   const [showTapNow, setShowTapNow] = useState(false);
+  const [juicing, setJuicing] = useState(false);
 
   const catchRef = useRef<HTMLVideoElement | null>(null);
   const dropRef = useRef<HTMLVideoElement | null>(null);
@@ -64,6 +68,7 @@ export function Game() {
   const startLockUntilRef = useRef(0);
   const tapArmedRef = useRef(false);
   const dropHoldTimerRef = useRef<number | null>(null);
+  const juiceTimerRef = useRef<number | null>(null);
 
   const setPhaseBoth = (p: Phase) => {
     phaseRef.current = p;
@@ -77,6 +82,7 @@ export function Game() {
   useEffect(() => {
     return () => {
       if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+      if (juiceTimerRef.current) window.clearTimeout(juiceTimerRef.current);
     };
   }, []);
 
@@ -126,6 +132,7 @@ export function Game() {
       tapArmedRef.current = false;
       progressRef.current = 0;
       setShowTapNow(false);
+      setJuicing(false);
       setSpeed(nextSpeed);
       speedRef.current = nextSpeed;
       startLockUntilRef.current = performance.now() + lockMs;
@@ -142,6 +149,7 @@ export function Game() {
     setScore(0);
     scoreRef.current = 0;
     tapArmedRef.current = false;
+    setJuicing(false);
     beginRound(1, 480);
   }, [beginRound]);
 
@@ -156,7 +164,11 @@ export function Game() {
       if (hi !== b) saveBest(hi);
       return hi;
     });
-    setLikes((n) => n + 40 + Math.floor(Math.random() * 30));
+    setLikes((n) => n + 90 + Math.floor(Math.random() * 70));
+    setViewers((n) => n + 160 + Math.floor(Math.random() * 220));
+    setJuicing(true);
+    if (juiceTimerRef.current) window.clearTimeout(juiceTimerRef.current);
+    juiceTimerRef.current = window.setTimeout(() => setJuicing(false), JUICE_MS);
     if (!muted) sound.playCatch();
   }, [muted]);
 
@@ -177,6 +189,7 @@ export function Game() {
   const startDrop = useCallback(() => {
     if (phaseRef.current === "dropping" || phaseRef.current === "failed") return;
     pendingDropRef.current = false;
+    setJuicing(false);
     setShowTapNow(false);
     setViewers((n) => Math.max(420, n - (320 + Math.floor(Math.random() * 280))));
     setPhaseBoth("dropping");
@@ -349,7 +362,11 @@ export function Game() {
             isFailed={phase === "dropping" || phase === "failed"}
           />
         ) : (
-          <>
+          <motion.div
+            className="absolute inset-0"
+            animate={juicing ? { scale: [1, 1.22, 1.08] } : { scale: 1 }}
+            transition={juicing ? { duration: 0.4, times: [0, 0.36, 1], ease: [0.16, 1, 0.3, 1] } : { duration: 0.18 }}
+          >
             <video
               ref={catchRef}
               src={CATCH_SRC}
@@ -372,7 +389,7 @@ export function Game() {
               preload="auto"
               onEnded={onDropEnded}
             />
-          </>
+          </motion.div>
         )}
         <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/65 to-transparent pointer-events-none" />
@@ -445,7 +462,12 @@ export function Game() {
         active={phase === "playing" || phase === "caught" || roasting}
         roast={roasting}
       />
-      <LiveReactions burst={phase === "caught"} ambient={phase === "playing" || phase === "idle"} />
+      <LiveReactions
+        burst={phase === "caught"}
+        detonate={juicing}
+        ambient={phase === "playing" || phase === "idle"}
+      />
+      <CatchJuice juicing={juicing} caught={phase === "caught"} />
 
       <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
         <AnimatePresence>
@@ -477,19 +499,6 @@ export function Game() {
               >
                 TAP NOW
               </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {phase === "caught" && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="absolute top-1/3 bg-emerald-500/90 text-white px-4 py-1.5 rounded-full font-black tracking-wider border border-white/40 shadow-xl"
-            >
-              CAUGHT
             </motion.div>
           )}
         </AnimatePresence>
