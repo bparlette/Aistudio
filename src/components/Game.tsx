@@ -17,7 +17,6 @@ import {
   SPEED_STEP,
   WINDOW_END,
   WINDOW_START,
-  windowForRate,
 } from "../lib/timing";
 
 type Phase = "idle" | "playing" | "caught" | "dropping" | "failed";
@@ -190,11 +189,9 @@ export function Game() {
     if (now < startLockUntilRef.current) return;
     tapArmedRef.current = true;
 
-    const rate = speedRef.current;
-    const { start, end } = windowForRate(rate);
     const t = useSim ? progressRef.current : catchRef.current?.currentTime ?? progressRef.current;
     progressRef.current = t;
-    if (t >= start && t <= end) {
+    if (t >= WINDOW_START && t <= WINDOW_END) {
       succeedCatch();
     } else {
       failNow();
@@ -214,13 +211,12 @@ export function Game() {
     }
 
     if (p === "playing") {
-      const { start, end } = windowForRate(speedRef.current);
-      setShowTapNow(!pendingDropRef.current && t >= start && t <= end);
-      if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, start)) {
+      setShowTapNow(!pendingDropRef.current && t >= WINDOW_START && t <= WINDOW_END);
+      if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, WINDOW_START)) {
         startDrop();
         return;
       }
-      if (!pendingDropRef.current && t > end) {
+      if (!pendingDropRef.current && t > WINDOW_END) {
         failNow();
       }
     } else {
@@ -250,7 +246,7 @@ export function Game() {
     }
   }, []);
 
-  // Tight clock: timeupdate is too coarse for a 0.55s window at 2.2x.
+  // Tight clock: timeupdate is too coarse for a 0.5s window at 2.2x.
   useEffect(() => {
     if (useSim) return;
     if (phase !== "playing" && phase !== "caught" && phase !== "idle") return;
@@ -281,13 +277,12 @@ export function Game() {
         progressRef.current = 0;
       }
       if (p === "playing") {
-        const { start, end } = windowForRate(speedRef.current);
-        setShowTapNow(!pendingDropRef.current && t >= start && t <= end);
-        if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, start)) {
+        setShowTapNow(!pendingDropRef.current && t >= WINDOW_START && t <= WINDOW_END);
+        if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, WINDOW_START)) {
           startDrop();
           return;
         }
-        if (!pendingDropRef.current && t > end) {
+        if (!pendingDropRef.current && t > WINDOW_END) {
           startDrop();
           return;
         }
@@ -311,7 +306,10 @@ export function Game() {
   const showDrop = phase === "dropping" || phase === "failed";
 
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-black text-white select-none touch-none">
+    <div
+      className="relative w-full h-[100dvh] overflow-hidden bg-black text-white select-none touch-none"
+      data-catch-window={`${WINDOW_START.toFixed(1)}-${WINDOW_END.toFixed(1)}`}
+    >
       <div className="absolute inset-0 z-0">
         {useSim ? (
           <BeachSimulation
