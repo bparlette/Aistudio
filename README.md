@@ -45,11 +45,15 @@ Video stays **muted by default** (clip audio talks over the play). Unmute is the
 
 ## Hosting
 
-Static Vite build on **GitHub Pages**.
+Static Vite build on **GitHub Pages**. Production files are on the `gh-pages` branch.
 
-- Site: `https://bparlette.github.io/Aistudio/`
-- Workflow: `.github/workflows/deploy-pages.yml` (builds on push to `main`)
+- **Live URL:** [https://bparlette.github.io/Aistudio/](https://bparlette.github.io/Aistudio/)
 - Build base path: `/Aistudio/`
+- Workflow (after merge to `main`): `.github/workflows/deploy-pages.yml`
+
+**One click if the URL 404s:** GitHub → this repo → **Settings → Pages → Branch: `gh-pages` / `/` (root) → Save**.
+
+The Pages API is not writable from this agent (403). The production build is already pushed to `gh-pages`.
 
 Local:
 
@@ -57,10 +61,8 @@ Local:
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # writes dist/ with /Aistudio/ base
-npm run preview
+npm run preview  # http://localhost:4173/Aistudio/
 ```
-
-If Pages is not enabled yet: **Settings → Pages → GitHub Actions** as the source. After the workflow runs, the URL above is the durable public host.
 
 ## Notes
 
