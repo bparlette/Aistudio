@@ -17,9 +17,8 @@ const TIMING = {
   LOOP_END: 2.5       // Seconds into video when the successful round resets
 };
 
-// We will use a local file instead of YouTube.
-// Make sure to upload your video to the "public" folder and name it "game-video.mp4"
-const VIDEO_URL = "/game-video.mp4";
+// We will use the GitHub raw video link
+const VIDEO_URL = "https://github.com/bparlette/Aistudio/raw/main/ScreenRecording_09-02-2026%2022-08-41_1.mov";
 
 export type GameState = "IDLE" | "PLAYING" | "FAILED";
 
