@@ -25,9 +25,11 @@ function spawn(count: number): Reaction[] {
 export function LiveReactions({
   burst,
   ambient,
+  detonate,
 }: {
   burst: boolean;
   ambient?: boolean;
+  detonate?: boolean;
 }) {
   const [reactions, setReactions] = useState<Reaction[]>([]);
 
@@ -35,15 +37,15 @@ export function LiveReactions({
     if (!burst && !ambient) return;
 
     const tick = () => {
-      const n = burst ? 5 : Math.random() > 0.55 ? 1 : 0;
+      const n = detonate ? 10 : burst ? 5 : Math.random() > 0.55 ? 1 : 0;
       if (n === 0) return;
-      setReactions((prev) => [...prev, ...spawn(n)].slice(-48));
+      setReactions((prev) => [...prev, ...spawn(n)].slice(-56));
     };
 
     tick();
-    const interval = setInterval(tick, burst ? 90 : 420);
+    const interval = setInterval(tick, detonate ? 50 : burst ? 90 : 420);
     return () => clearInterval(interval);
-  }, [burst, ambient]);
+  }, [burst, ambient, detonate]);
 
   useEffect(() => {
     if (burst || ambient) return;
