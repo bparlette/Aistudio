@@ -17,6 +17,7 @@ import {
   SPEED_STEP,
   WINDOW_END,
   WINDOW_START,
+  windowForRate,
 } from "../lib/timing";
 
 type Phase = "idle" | "playing" | "caught" | "dropping" | "failed";
@@ -51,6 +52,7 @@ export function Game() {
   const [viewers, setViewers] = useState(14820);
   const [likes, setLikes] = useState(862);
   const [simProgress, setSimProgress] = useState(0);
+  const [showTapNow, setShowTapNow] = useState(false);
 
   const catchRef = useRef<HTMLVideoElement | null>(null);
   const dropRef = useRef<HTMLVideoElement | null>(null);
@@ -61,6 +63,8 @@ export function Game() {
   const progressRef = useRef(0);
   const pendingDropRef = useRef(false);
   const rafRef = useRef<number | null>(null);
+  const startLockUntilRef = useRef(0);
+  const tapArmedRef = useRef(false);
 
   const setPhaseBoth = (p: Phase) => {
     phaseRef.current = p;
@@ -107,11 +111,14 @@ export function Game() {
   }, []);
 
   const beginRound = useCallback(
-    (nextSpeed: number) => {
+    (nextSpeed: number, lockMs = 220) => {
       pendingDropRef.current = false;
+      tapArmedRef.current = false;
       progressRef.current = 0;
+      setShowTapNow(false);
       setSpeed(nextSpeed);
       speedRef.current = nextSpeed;
+      startLockUntilRef.current = performance.now() + lockMs;
       setPhaseBoth("playing");
       if (!useSim) {
         playCatchVideo(nextSpeed, 0);
@@ -124,7 +131,8 @@ export function Game() {
   const startRun = useCallback(() => {
     setScore(0);
     scoreRef.current = 0;
-    beginRound(1);
+    tapArmedRef.current = false;
+    beginRound(1, 480);
   }, [beginRound]);
 
   const succeedCatch = useCallback(() => {
@@ -169,7 +177,7 @@ export function Game() {
 
   const handleTap = useCallback(() => {
     const now = performance.now();
-    if (now - lastTapRef.current < 220) return;
+    if (now - lastTapRef.current < 200) return;
     lastTapRef.current = now;
 
     const p = phaseRef.current;
@@ -178,10 +186,15 @@ export function Game() {
       return;
     }
     if (p !== "playing") return;
+    // Swallow leftover events from the start tap. Second+ taps are catch/miss.
+    if (now < startLockUntilRef.current) return;
+    tapArmedRef.current = true;
 
+    const rate = speedRef.current;
+    const { start, end } = windowForRate(rate);
     const t = useSim ? progressRef.current : catchRef.current?.currentTime ?? progressRef.current;
     progressRef.current = t;
-    if (t >= WINDOW_START && t <= WINDOW_END) {
+    if (t >= start && t <= end) {
       succeedCatch();
     } else {
       failNow();
@@ -201,13 +214,17 @@ export function Game() {
     }
 
     if (p === "playing") {
-      if (pendingDropRef.current && t >= DROP_CUT_IN) {
+      const { start, end } = windowForRate(speedRef.current);
+      setShowTapNow(!pendingDropRef.current && t >= start && t <= end);
+      if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, start)) {
         startDrop();
         return;
       }
-      if (!pendingDropRef.current && t > WINDOW_END) {
+      if (!pendingDropRef.current && t > end) {
         failNow();
       }
+    } else {
+      setShowTapNow(false);
     }
 
     if (p === "caught" && t >= LOOP_DURATION - 0.08) {
@@ -263,13 +280,19 @@ export function Game() {
       if (p === "idle" && t >= IDLE_LOOP_END) {
         progressRef.current = 0;
       }
-      if (p === "playing" && pendingDropRef.current && t >= DROP_CUT_IN) {
-        startDrop();
-        return;
-      }
-      if (p === "playing" && t > WINDOW_END && !pendingDropRef.current) {
-        startDrop();
-        return;
+      if (p === "playing") {
+        const { start, end } = windowForRate(speedRef.current);
+        setShowTapNow(!pendingDropRef.current && t >= start && t <= end);
+        if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, start)) {
+          startDrop();
+          return;
+        }
+        if (!pendingDropRef.current && t > end) {
+          startDrop();
+          return;
+        }
+      } else {
+        setShowTapNow(false);
       }
       if (p === "caught" && t >= LOOP_DURATION) {
         const next = Math.min(speedRef.current + SPEED_STEP, SPEED_CAP);
@@ -397,20 +420,39 @@ export function Game() {
         </div>
       </div>
 
-      <FakeChat active={phase !== "failed"} />
+      <FakeChat active={phase === "playing" || phase === "caught" || phase === "dropping"} />
       <LiveReactions burst={phase === "caught"} ambient={phase === "playing" || phase === "idle"} />
 
       <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
         <AnimatePresence>
           {phase === "idle" && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="absolute bottom-24 inset-x-0 text-center px-6"
+              className="absolute top-[42%] inset-x-0 text-center px-6"
             >
               <p className="text-[11px] tracking-[0.25em] uppercase text-white/70 mb-1">Live · Beach Catch</p>
               <p className="text-xl font-black uppercase tracking-wide drop-shadow-lg">Tap to play along</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showTapNow && phase === "playing" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.82 }}
+              animate={{ opacity: 1, scale: [1, 1.12, 1] }}
+              exit={{ opacity: 0, scale: 1.15 }}
+              transition={{ duration: 0.28, repeat: Infinity, repeatType: "mirror" }}
+              className="absolute top-[38%] inset-x-0 text-center z-40"
+            >
+              <p
+                className="text-6xl sm:text-7xl font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_4px_24px_rgba(251,191,36,0.95)]"
+                style={{ WebkitTextStroke: "2px #000" }}
+              >
+                TAP NOW
+              </p>
             </motion.div>
           )}
         </AnimatePresence>

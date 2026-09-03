@@ -51,7 +51,7 @@ export function FakeChat({ active }: { active: boolean }) {
   }, [active]);
 
   return (
-    <div className="absolute bottom-5 left-3 z-20 w-[68%] max-w-[240px] h-40 overflow-hidden flex flex-col justify-end pointer-events-none">
+    <div className="absolute bottom-5 left-3 z-20 w-[58%] max-w-[220px] h-36 overflow-hidden flex flex-col justify-end pointer-events-none">
       <AnimatePresence>
         {messages.map((m) => (
           <motion.div

@@ -38,8 +38,10 @@ Verified on `public/game-video.mp4`:
 **Game constants** (`src/lib/timing.ts`):
 
 - `loopDuration` = **5.96s**
-- `windowStart` = **3.00s** (ball in the air)
-- `windowEnd` = **4.20s** (just after the secure)
+- `windowStart` = **2.70s** (1x — widened for a phone thumb)
+- `windowEnd` = **4.40s** (1x)
+- Window **scales with playbackRate** so wall-clock tap time stays ~1.7s
+- Big **TAP NOW** flash for the whole window. First tap only starts the run.
 
 Video stays **muted by default** (clip audio talks over the play). Unmute is the speaker toggle. Blurred pillarbox bars are cropped with a 124% `object-cover` so the beach fills the phone.
 
