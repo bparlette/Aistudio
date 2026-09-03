@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 const USERS = [
@@ -12,19 +12,45 @@ const USERS = [
   "camp_cut",
 ];
 
-const HYPE = [
-  "bro is fast 🏃‍♂️💨",
-  "helmet at the beach crazy 😂",
-  "He's gonna drop it",
-  "W catch incoming",
-  "hands like glue!",
-  "W stream",
-  "tap the screen yall!",
-  "too easy for him",
-  "oakley visor is clean 🔥",
-  "he got hands tho",
-  "LET'S GOOO 🏈",
-];
+const HYPE: Record<string, string[]> = {
+  none: [
+    "bro is fast 🏃‍♂️💨",
+    "helmet at the beach crazy 😂",
+    "He's gonna drop it",
+    "W catch incoming",
+    "tap the screen yall!",
+    "oakley visor is clean 🔥",
+    "W stream",
+  ],
+  "Practice squad": [
+    "practice squad HANDS",
+    "camp body cooking",
+    "PS catch tho",
+    "keep this dude up",
+    "practice squad speed",
+  ],
+  UDFA: [
+    "UDFA and he's COOKING",
+    "undrafted legend",
+    "cut this tape",
+    "UDFA energy fr",
+    "who let him go",
+  ],
+  "Starting WR": [
+    "STARTING WR",
+    "put him in the lineup",
+    "that's WR1",
+    "route of the year",
+    "starting lineup NOW",
+  ],
+  "Super Bowl": [
+    "SUPER BOWL",
+    "parade in the sand",
+    "rings incoming",
+    "confetti on the beach",
+    "he just won it",
+  ],
+};
 
 /** Roast the fake catcher only — comedy, no real player/victim names. */
 const ROASTS = [
@@ -56,14 +82,20 @@ function line(text: string, roast = false): Line {
   };
 }
 
+import type { Rank } from "../lib/ranks";
+
 export function FakeChat({
   active,
   roast,
+  rank,
 }: {
   active: boolean;
   roast?: boolean;
+  rank?: Rank | null;
 }) {
   const [messages, setMessages] = useState<Line[]>([]);
+  const rankNameRef = React.useRef<string>("none");
+  rankNameRef.current = rank?.name ?? "none";
 
   useEffect(() => {
     if (!active) {
@@ -86,7 +118,8 @@ export function FakeChat({
       () => {
         if (Math.random() > (roast ? 0.12 : 0.3)) {
           setMessages((prev) => {
-            const next = line(pick(roast ? ROASTS : HYPE), !!roast);
+            const pool = roast ? ROASTS : (HYPE[rankNameRef.current] ?? HYPE.none);
+            const next = line(pick(pool), !!roast);
             return [...prev, next].slice(-5);
           });
         }

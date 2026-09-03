@@ -5,6 +5,7 @@ import { BeachSimulation } from "./BeachSimulation";
 import { CatchJuice } from "./CatchJuice";
 import { FakeChat } from "./FakeChat";
 import { LiveReactions } from "./LiveReactions";
+import { rankForScore } from "../lib/ranks";
 import { sound } from "../lib/audio";
 import {
   assetUrl,
@@ -348,6 +349,7 @@ export function Game() {
 
   const showDrop = phase === "dropping" || phase === "failed";
   const roasting = showDrop;
+  const rank = rankForScore(score);
 
   return (
     <div
@@ -439,12 +441,14 @@ export function Game() {
         </div>
       </div>
 
-      {/* Score chip — live, not a settings panel */}
+      {/* Score chip with rank */}
       <div className="absolute top-[4.6rem] left-3 z-20 pointer-events-none">
         <div className="bg-black/40 backdrop-blur-md rounded-2xl px-3 py-1.5 border border-white/10">
-          <p className="text-[10px] uppercase tracking-wider text-white/60">This run</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-amber-300">
+            {rank ? rank.name : "This run"}
+          </p>
           <p className="text-2xl font-black leading-none tabular-nums">{score}</p>
-          <p className="text-[10px] text-amber-300 mt-0.5">Best {best}</p>
+          <p className="text-[10px] text-white/60 mt-0.5">Best {best}</p>
           {speed > 1 && phase !== "idle" && phase !== "failed" && (
             <p className="text-[10px] text-red-300 font-semibold">{speed.toFixed(2)}x</p>
           )}
@@ -461,6 +465,7 @@ export function Game() {
       <FakeChat
         active={phase === "playing" || phase === "caught" || roasting}
         roast={roasting}
+        rank={rank}
       />
       <LiveReactions
         burst={phase === "caught"}
