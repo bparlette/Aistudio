@@ -14,9 +14,9 @@ function omitIphoneMov(): Plugin {
   };
 }
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, isPreview }) => ({
   // Project Pages URL: https://bparlette.github.io/Aistudio/
-  base: command === "build" ? "/Aistudio/" : "/",
+  base: command === "build" || isPreview ? "/Aistudio/" : "/",
   plugins: [react(), tailwindcss(), omitIphoneMov()],
   resolve: {
     alias: {
