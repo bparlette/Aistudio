@@ -132,6 +132,23 @@ export function Game() {
     v.play().catch(() => {});
   }, []);
 
+  const resetCatchClock = useCallback(
+    (from = 0, rate = 1) => {
+      pendingDropRef.current = false;
+      tapArmedRef.current = false;
+      progressRef.current = from;
+      setShowTapNow(false);
+      if (!useSim) {
+        playCatchVideo(rate, from);
+      } else {
+        setSimProgress(from);
+      }
+    },
+    [playCatchVideo, useSim],
+  );
+
+  const isRunStarting = useCallback(() => performance.now() < startLockUntilRef.current, []);
+
   const beginRound = useCallback(
     (nextSpeed: number, lockMs = 220) => {
       pendingDropRef.current = false;
@@ -154,14 +171,15 @@ export function Game() {
   const startRun = useCallback(() => {
     setScore(0);
     scoreRef.current = 0;
-    tapArmedRef.current = false;
     setShareStill(null);
     setJuicing(false);
+    resetCatchClock(0, 1);
     beginRound(1, 480);
-  }, [beginRound]);
+  }, [beginRound, resetCatchClock]);
 
   const succeedCatch = useCallback(() => {
     if (phaseRef.current !== "playing") return;
+    setShowTapNow(false);
     setPhaseBoth("caught");
     const next = scoreRef.current + 1;
     scoreRef.current = next;
@@ -192,6 +210,7 @@ export function Game() {
       const sand = captureVideoFrame(drop);
       if (sand && !helmetStillRef.current) helmetStillRef.current = sand;
     }
+    setShowTapNow(false);
     setShareStill(helmetStillRef.current);
     setPhaseBoth("failed");
   }, []);
@@ -233,6 +252,7 @@ export function Game() {
 
     const p = phaseRef.current;
     if (p === "idle" || p === "failed") {
+      resetCatchClock(0, 1);
       startRun();
       return;
     }
@@ -248,7 +268,7 @@ export function Game() {
     } else {
       failNow();
     }
-  }, [failNow, startRun, succeedCatch, useSim]);
+  }, [failNow, resetCatchClock, startRun, succeedCatch, useSim]);
 
   const onCatchTime = useCallback(() => {
     const v = catchRef.current;
@@ -269,6 +289,10 @@ export function Game() {
     }
 
     if (p === "playing") {
+      if (isRunStarting()) {
+        setShowTapNow(false);
+        return;
+      }
       setShowTapNow(!pendingDropRef.current && t >= WINDOW_START && t <= WINDOW_END);
       if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, WINDOW_START)) {
         startDrop();
@@ -285,18 +309,18 @@ export function Game() {
       const next = Math.min(speedRef.current + SPEED_STEP, SPEED_CAP);
       beginRound(next);
     }
-  }, [beginRound, failNow, startDrop]);
+  }, [beginRound, failNow, isRunStarting, startDrop]);
 
   const onCatchEnded = useCallback(() => {
     if (phaseRef.current === "caught") {
       const next = Math.min(speedRef.current + SPEED_STEP, SPEED_CAP);
       beginRound(next);
     } else if (phaseRef.current === "playing") {
-      failNow();
+      if (!isRunStarting()) failNow();
     } else if (phaseRef.current === "idle") {
       playCatchVideo(1, 0);
     }
-  }, [beginRound, failNow, playCatchVideo]);
+  }, [beginRound, failNow, isRunStarting, playCatchVideo]);
 
   const onDropEnded = useCallback(() => {
     if (phaseRef.current === "dropping") {
@@ -336,14 +360,18 @@ export function Game() {
         progressRef.current = 0;
       }
       if (p === "playing") {
-        setShowTapNow(!pendingDropRef.current && t >= WINDOW_START && t <= WINDOW_END);
-        if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, WINDOW_START)) {
-          startDrop();
-          return;
-        }
-        if (!pendingDropRef.current && t > WINDOW_END) {
-          startDrop();
-          return;
+        if (isRunStarting()) {
+          setShowTapNow(false);
+        } else {
+          setShowTapNow(!pendingDropRef.current && t >= WINDOW_START && t <= WINDOW_END);
+          if (pendingDropRef.current && t >= Math.min(DROP_CUT_IN, WINDOW_START)) {
+            startDrop();
+            return;
+          }
+          if (!pendingDropRef.current && t > WINDOW_END) {
+            startDrop();
+            return;
+          }
         }
       } else {
         setShowTapNow(false);
@@ -360,7 +388,11 @@ export function Game() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [useSim, phase, beginRound, startDrop]);
+  }, [useSim, phase, beginRound, isRunStarting, startDrop]);
+
+  useEffect(() => {
+    if (phase !== "playing") setShowTapNow(false);
+  }, [phase]);
 
   const showDrop = phase === "dropping" || phase === "failed";
   const roasting = showDrop;
@@ -415,6 +447,10 @@ export function Game() {
       <div
         className="absolute inset-0 z-10"
         onPointerUp={(e) => {
+          if ((e.target as HTMLElement).closest("[data-chrome]")) return;
+          handleTap();
+        }}
+        onClick={(e) => {
           if ((e.target as HTMLElement).closest("[data-chrome]")) return;
           handleTap();
         }}
@@ -489,6 +525,7 @@ export function Game() {
         active={phase === "playing" || phase === "caught" || roasting}
         roast={roasting}
         rank={rank}
+        endScreen={phase === "failed"}
       />
       <LiveReactions
         burst={phase === "caught"}
@@ -512,17 +549,17 @@ export function Game() {
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {showTapNow && phase === "playing" && (
             <motion.div
+              key="tap-now"
               initial={{ opacity: 0, scale: 0.82 }}
-              animate={{ opacity: 1, scale: [1, 1.12, 1] }}
-              exit={{ opacity: 0, scale: 1.15 }}
-              transition={{ duration: 0.28, repeat: Infinity, repeatType: "mirror" }}
-              className="absolute top-[38%] inset-x-0 text-center z-40"
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.1 } }}
+              className="absolute top-[38%] inset-x-0 text-center z-40 pointer-events-none"
             >
               <p
-                className="text-6xl sm:text-7xl font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_4px_24px_rgba(251,191,36,0.95)]"
+                className="tap-now-pulse text-6xl sm:text-7xl font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_4px_24px_rgba(251,191,36,0.95)]"
                 style={{ WebkitTextStroke: "2px #000" }}
               >
                 TAP NOW
@@ -551,12 +588,14 @@ export function Game() {
       </div>
 
       {phase === "failed" && (
-        <div className="absolute inset-x-0 top-[38%] z-40 flex flex-col items-center pointer-events-none">
-          <ShareCard still={shareStill} score={score} />
-          <p className="mt-3 text-[11px] font-semibold tracking-wide uppercase text-white/90 pointer-events-none">
-            Tap to retry
+        <>
+          <div className="absolute inset-x-0 top-[30%] z-40 flex flex-col items-center pointer-events-none">
+            <ShareCard still={shareStill} score={score} />
+          </div>
+          <p className="absolute inset-x-0 bottom-[5.5rem] z-50 text-center text-[11px] font-semibold tracking-[0.18em] uppercase text-white/95 pointer-events-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+            Tap anywhere to retry
           </p>
-        </div>
+        </>
       )}
 
       <AnimatePresence>
