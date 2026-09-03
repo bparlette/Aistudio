@@ -9,17 +9,19 @@ export const BEST_SCORE_KEY = "beachCatchBest";
 export const LOOP_DURATION = 5.96;
 
 /**
- * Ball is in the air ~4.5s; it arrives in his hands ~4.55–4.70s.
- * Window is tight around that arrival (not the earlier shoulder-look).
+ * Verified on public/game-video.mp4:
+ *   ~3.00s ball enters, hands go up
+ *   4.00s catch is secured in stride
+ * Tap window is ball-in-air until just after the secure.
  */
-export const WINDOW_START = 4.2;
-export const WINDOW_END = 4.75;
+export const WINDOW_START = 3.0;
+export const WINDOW_END = 4.2;
 
-/** Idle live-preview loops only the sprint-toward-camera, so the catch stays a surprise. */
-export const IDLE_LOOP_END = 1.85;
+/** Idle live-preview loops only the sprint-toward-camera. */
+export const IDLE_LOOP_END = 0.98;
 
-/** After a miss, cut to the drop insert once we reach the pre-catch beat. */
-export const DROP_CUT_IN = 4.18;
+/** Cut to the drop insert before the real catch is secured. */
+export const DROP_CUT_IN = 2.95;
 
 export const SPEED_STEP = 0.12;
 export const SPEED_CAP = 2.2;

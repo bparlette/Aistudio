@@ -25,24 +25,23 @@ Do not use the `.mov` in `<video>` — Safari/Chrome often show it sideways.
 
 ## Catch-window timestamps
 
-Calibrated by watching `public/game-video.mp4` frame-by-frame:
+Verified on `public/game-video.mp4`:
 
 | Beat | Time |
 | --- | --- |
-| Sprint toward camera | 0.00s – ~2.00s |
-| Whip / he runs toward the ocean | ~2.00s – ~3.50s |
-| Looks over the shoulder, ball not yet in hands | ~3.60s – ~4.20s |
-| **Ball in the air** | ~4.45s – ~4.60s |
-| **Ball arrives in his hands (catch)** | ~4.55s – ~4.70s |
-| Ball tucked, he runs | ~5.00s – 5.96s |
+| Sprint toward camera (gold helmet) | 0.00s – 1.00s |
+| Passes camera, turns, sprints toward ocean | 1.00s – 2.00s |
+| Football enters; hands go up | ~3.00s |
+| **Catch secured in stride** | **4.00s** |
+| Runs with the ball; clip cuts | 4.00s – 5.96s |
 
 **Game constants** (`src/lib/timing.ts`):
 
-- `loopDuration` = **5.96s** (full clip — the round *is* the run + catch)
-- `windowStart` = **4.20s**
-- `windowEnd` = **4.75s**
+- `loopDuration` = **5.96s**
+- `windowStart` = **3.00s** (ball in the air)
+- `windowEnd` = **4.20s** (just after the secure)
 
-Earlier guesses of `2.2–3.3s` / `3.6–4.4s` were off: at 3.6–4.4s he is still running away and looking back. The tap is the moment the ball gets to his hands.
+Video stays **muted by default** (clip audio talks over the play). Unmute is the speaker toggle. Blurred pillarbox bars are cropped with a 124% `object-cover` so the beach fills the phone.
 
 ## Hosting
 

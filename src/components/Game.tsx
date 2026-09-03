@@ -45,7 +45,7 @@ export function Game() {
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(loadBest);
   const [speed, setSpeed] = useState(1);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [useSim, setUseSim] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewers, setViewers] = useState(14820);
@@ -80,10 +80,11 @@ export function Game() {
     if (!v) return;
     v.setAttribute("webkit-playsinline", "true");
     v.setAttribute("playsinline", "true");
-    v.muted = true;
+    v.muted = muted;
     v.playsInline = true;
     v.play().catch(() => {});
-  }, [useSim]);
+    if (dropRef.current) dropRef.current.muted = muted;
+  }, [useSim, muted]);
 
   useEffect(() => {
     const tick = setInterval(() => {
@@ -300,9 +301,9 @@ export function Game() {
             <video
               ref={catchRef}
               src={CATCH_SRC}
-              className={`absolute inset-0 w-full h-full object-cover ${showDrop ? "opacity-0" : "opacity-100"}`}
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[124%] h-[124%] max-w-none object-cover ${showDrop ? "opacity-0" : "opacity-100"}`}
               playsInline
-              muted
+              muted={muted}
               autoPlay
               preload="auto"
               loop={false}
@@ -313,9 +314,9 @@ export function Game() {
             <video
               ref={dropRef}
               src={DROP_SRC}
-              className={`absolute inset-0 w-full h-full object-cover ${showDrop ? "opacity-100" : "opacity-0"}`}
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[124%] h-[124%] max-w-none object-cover ${showDrop ? "opacity-100" : "opacity-0"}`}
               playsInline
-              muted
+              muted={muted}
               preload="auto"
               onEnded={onDropEnded}
             />
@@ -336,38 +337,43 @@ export function Game() {
       {/* Live stream header */}
       <div className="absolute top-0 inset-x-0 z-20 pt-[max(10px,env(safe-area-inset-top))] px-3 flex items-start justify-between pointer-events-none">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 via-red-600 to-red-800 ring-2 ring-white/80 shrink-0" />
+          <div className="relative shrink-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 via-red-600 to-red-800 ring-2 ring-white" />
+            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black tracking-widest bg-red-600 px-1 rounded-[3px] leading-none py-0.5">
+              LIVE
+            </span>
+          </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-[13px] truncate">49ersBeachCatcher</span>
-              <span className="text-[9px] font-black tracking-widest bg-red-600 px-1.5 py-0.5 rounded-sm leading-none">
-                LIVE
+              <span className="text-[10px] font-bold bg-white/15 px-1.5 py-0.5 rounded-md leading-none">
+                Follow
               </span>
             </div>
-            <p className="text-[10px] text-white/70 truncate">Ocean Beach · tap to catch</p>
+            <p className="text-[10px] text-white/70 truncate">Ocean Beach</p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 pointer-events-auto" data-chrome>
-          <div className="flex items-center gap-1 bg-black/45 backdrop-blur-md px-2 py-1 rounded-full text-[11px] font-semibold">
+          <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold">
             <Eye className="w-3.5 h-3.5 text-white/80" />
             {viewers.toLocaleString()}
           </div>
           <button
             type="button"
             aria-label={muted ? "Unmute" : "Mute"}
-            className="p-1.5 rounded-full bg-black/45 backdrop-blur-md"
+            className="p-1.5 rounded-full bg-black/50 backdrop-blur-md"
             onClick={() => setMuted((m) => !m)}
           >
-            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {muted ? <VolumeX className="w-4 h-4 text-white/80" /> : <Volume2 className="w-4 h-4" />}
           </button>
           <button
             type="button"
             aria-label="Settings"
-            className="p-1.5 rounded-full bg-black/45 backdrop-blur-md"
+            className="p-1 rounded-full bg-black/30 text-white/50"
             onClick={() => setSettingsOpen(true)}
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
