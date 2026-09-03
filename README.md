@@ -8,8 +8,10 @@ Phone web game that plays like a live stream of a fake-49ers-player beach catch.
 
 1. Open the URL on a phone (portrait). The clip is the graphics.
 2. Tap anywhere to start a run.
-3. Tap again in the catch window — he catches, likes/loves spam the **right** side, speed goes up, next round starts.
-4. Tap early/late, or miss the window — a **created drop** plays (ball slips and hits the sand). Game over. Tap to retry.
+3. Tap again in the catch window — **catch juice** (~0.4s): zoom punch, hearts detonate, fake Super Chat, CAUGHT stamp. Speed goes up, next round starts.
+4. Tap early/late, or miss — drop clip plays, then **freezes on the ball in the sand**. Chat roasts him (FRAUD / fake 49er). Hearts stop. Share card: helmet + rank + streak + “beat this.” Tap the card to copy a tweet (Web Share on phones). Tap elsewhere to retry.
+
+**Streak ranks** (HUD + chat, reset on drop): 1 Practice squad · 3 UDFA · 5 Starting WR · 8 Super Bowl.
 
 Scores this run and your **best run** are stored in `localStorage` (`beachCatchBest`). Each catch adds `+0.12` playback rate, capped at `2.2`.
 
