@@ -2,9 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Eye, Heart, Settings, Volume2, VolumeX, X } from "lucide-react";
 import { BeachSimulation } from "./BeachSimulation";
+import { CatchJuice } from "./CatchJuice";
 import { FakeChat } from "./FakeChat";
 import { LiveReactions } from "./LiveReactions";
+import { ShareCard } from "./ShareCard";
 import { sound } from "../lib/audio";
+import { rankForScore } from "../lib/ranks";
+import { captureVideoFrame } from "../lib/share";
 import {
   assetUrl,
   BEST_SCORE_KEY,
@@ -18,6 +22,8 @@ import {
   WINDOW_END,
   WINDOW_START,
 } from "../lib/timing";
+
+const JUICE_MS = 400;
 
 type Phase = "idle" | "playing" | "caught" | "dropping" | "failed";
 
@@ -52,6 +58,8 @@ export function Game() {
   const [likes, setLikes] = useState(862);
   const [simProgress, setSimProgress] = useState(0);
   const [showTapNow, setShowTapNow] = useState(false);
+  const [juicing, setJuicing] = useState(false);
+  const [shareStill, setShareStill] = useState<string | null>(null);
 
   const catchRef = useRef<HTMLVideoElement | null>(null);
   const dropRef = useRef<HTMLVideoElement | null>(null);
@@ -64,6 +72,9 @@ export function Game() {
   const rafRef = useRef<number | null>(null);
   const startLockUntilRef = useRef(0);
   const tapArmedRef = useRef(false);
+  const juiceTimerRef = useRef<number | null>(null);
+  const helmetStillRef = useRef<string | null>(null);
+  const dropHoldTimerRef = useRef<number | null>(null);
 
   const setPhaseBoth = (p: Phase) => {
     phaseRef.current = p;
@@ -73,6 +84,13 @@ export function Game() {
   useEffect(() => {
     scoreRef.current = score;
   }, [score]);
+
+  useEffect(() => {
+    return () => {
+      if (juiceTimerRef.current) window.clearTimeout(juiceTimerRef.current);
+      if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     speedRef.current = speed;
@@ -91,8 +109,13 @@ export function Game() {
 
   useEffect(() => {
     const tick = setInterval(() => {
+      const p = phaseRef.current;
+      if (p === "dropping" || p === "failed") {
+        setViewers((n) => Math.max(180, n - (18 + Math.floor(Math.random() * 48))));
+        return;
+      }
       setViewers((n) => n + Math.floor(Math.random() * 17) - 4);
-      setLikes((n) => n + (phaseRef.current === "caught" ? 8 + Math.floor(Math.random() * 14) : Math.random() > 0.6 ? 1 : 0));
+      setLikes((n) => n + (p === "caught" ? 8 + Math.floor(Math.random() * 14) : Math.random() > 0.6 ? 1 : 0));
     }, 700);
     return () => clearInterval(tick);
   }, []);
@@ -115,6 +138,7 @@ export function Game() {
       tapArmedRef.current = false;
       progressRef.current = 0;
       setShowTapNow(false);
+      setJuicing(false);
       setSpeed(nextSpeed);
       speedRef.current = nextSpeed;
       startLockUntilRef.current = performance.now() + lockMs;
@@ -131,6 +155,8 @@ export function Game() {
     setScore(0);
     scoreRef.current = 0;
     tapArmedRef.current = false;
+    setShareStill(null);
+    setJuicing(false);
     beginRound(1, 480);
   }, [beginRound]);
 
@@ -145,13 +171,37 @@ export function Game() {
       if (hi !== b) saveBest(hi);
       return hi;
     });
-    setLikes((n) => n + 40 + Math.floor(Math.random() * 30));
+    setLikes((n) => n + 90 + Math.floor(Math.random() * 70));
+    setViewers((n) => n + 160 + Math.floor(Math.random() * 220));
+    setJuicing(true);
+    if (juiceTimerRef.current) window.clearTimeout(juiceTimerRef.current);
+    juiceTimerRef.current = window.setTimeout(() => setJuicing(false), JUICE_MS);
     if (!muted) sound.playCatch();
   }, [muted]);
+
+  const holdDropFrame = useCallback(() => {
+    const drop = dropRef.current;
+    if (drop) {
+      drop.pause();
+      const hold = Math.max(0, (Number.isFinite(drop.duration) ? drop.duration : 1.45) - 0.05);
+      try {
+        drop.currentTime = hold;
+      } catch {
+        /* ignore */
+      }
+      const sand = captureVideoFrame(drop);
+      if (sand && !helmetStillRef.current) helmetStillRef.current = sand;
+    }
+    setShareStill(helmetStillRef.current);
+    setPhaseBoth("failed");
+  }, []);
 
   const startDrop = useCallback(() => {
     if (phaseRef.current === "dropping" || phaseRef.current === "failed") return;
     pendingDropRef.current = false;
+    setJuicing(false);
+    setShowTapNow(false);
+    setViewers((n) => Math.max(420, n - (320 + Math.floor(Math.random() * 280))));
     setPhaseBoth("dropping");
     const live = catchRef.current;
     if (live) live.pause();
@@ -161,8 +211,10 @@ export function Game() {
       drop.playbackRate = 1;
       drop.play().catch(() => {});
     }
+    if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+    dropHoldTimerRef.current = window.setTimeout(holdDropFrame, 1650);
     if (!muted) sound.playDrop();
-  }, [muted]);
+  }, [holdDropFrame, muted]);
 
   const failNow = useCallback(() => {
     const live = catchRef.current;
@@ -205,8 +257,14 @@ export function Game() {
     progressRef.current = t;
     const p = phaseRef.current;
 
-    if (p === "idle" && t >= IDLE_LOOP_END) {
-      v.currentTime = 0;
+    if (p === "idle") {
+      if (t >= 0.32 && t <= 0.72) {
+        const shot = captureVideoFrame(v);
+        if (shot) helmetStillRef.current = shot;
+      }
+      if (t >= IDLE_LOOP_END) {
+        v.currentTime = 0;
+      }
       return;
     }
 
@@ -242,9 +300,10 @@ export function Game() {
 
   const onDropEnded = useCallback(() => {
     if (phaseRef.current === "dropping") {
-      setPhaseBoth("failed");
+      if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+      holdDropFrame();
     }
-  }, []);
+  }, [holdDropFrame]);
 
   // Tight clock: timeupdate is too coarse for a 0.5s window at 2.2x.
   useEffect(() => {
@@ -304,6 +363,8 @@ export function Game() {
   }, [useSim, phase, beginRound, startDrop]);
 
   const showDrop = phase === "dropping" || phase === "failed";
+  const roasting = showDrop;
+  const rank = rankForScore(score);
 
   return (
     <div className="relative w-full h-[100dvh] overflow-hidden bg-black text-white select-none touch-none">
@@ -315,7 +376,11 @@ export function Game() {
             isFailed={phase === "dropping" || phase === "failed"}
           />
         ) : (
-          <>
+          <motion.div
+            className="absolute inset-0"
+            animate={juicing ? { scale: [1, 1.22, 1.08] } : { scale: 1 }}
+            transition={juicing ? { duration: 0.4, times: [0, 0.36, 1], ease: [0.16, 1, 0.3, 1] } : { duration: 0.18 }}
+          >
             <video
               ref={catchRef}
               src={CATCH_SRC}
@@ -338,7 +403,7 @@ export function Game() {
               preload="auto"
               onEnded={onDropEnded}
             />
-          </>
+          </motion.div>
         )}
         <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/65 to-transparent pointer-events-none" />
@@ -396,12 +461,14 @@ export function Game() {
         </div>
       </div>
 
-      {/* Score chip — live, not a settings panel */}
+      {/* Score chip — chase the title, not the number */}
       <div className="absolute top-[4.6rem] left-3 z-20 pointer-events-none">
         <div className="bg-black/40 backdrop-blur-md rounded-2xl px-3 py-1.5 border border-white/10">
-          <p className="text-[10px] uppercase tracking-wider text-white/60">This run</p>
+          <p className="text-[10px] uppercase tracking-wider text-amber-300 font-bold">
+            {rank ? rank.name : "This run"}
+          </p>
           <p className="text-2xl font-black leading-none tabular-nums">{score}</p>
-          <p className="text-[10px] text-amber-300 mt-0.5">Best {best}</p>
+          <p className="text-[10px] text-white/60 mt-0.5">Best {best}</p>
           {speed > 1 && phase !== "idle" && phase !== "failed" && (
             <p className="text-[10px] text-red-300 font-semibold">{speed.toFixed(2)}x</p>
           )}
@@ -409,14 +476,23 @@ export function Game() {
       </div>
 
       <div className="absolute right-3 bottom-28 z-20 pointer-events-none flex flex-col items-center gap-2">
-        <div className="flex flex-col items-center">
+        <div className={`flex flex-col items-center ${roasting ? "opacity-35 grayscale" : ""}`}>
           <Heart className="w-7 h-7 fill-rose-500 text-rose-500 drop-shadow" />
           <span className="text-[11px] font-semibold mt-0.5">{likes}</span>
         </div>
       </div>
 
-      <FakeChat active={phase === "playing" || phase === "caught" || phase === "dropping"} />
-      <LiveReactions burst={phase === "caught"} ambient={phase === "playing" || phase === "idle"} />
+      <FakeChat
+        active={phase === "playing" || phase === "caught" || roasting}
+        roast={roasting}
+        rank={rank}
+      />
+      <LiveReactions
+        burst={phase === "caught"}
+        detonate={juicing}
+        ambient={phase === "playing" || phase === "idle"}
+      />
+      <CatchJuice juicing={juicing} caught={phase === "caught"} rank={rank} />
 
       <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
         <AnimatePresence>
@@ -453,40 +529,32 @@ export function Game() {
         </AnimatePresence>
 
         <AnimatePresence>
-          {phase === "caught" && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="absolute top-1/3 bg-emerald-500/90 text-white px-4 py-1.5 rounded-full font-black tracking-wider border border-white/40 shadow-xl"
-            >
-              CAUGHT
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {(phase === "dropping" || phase === "failed") && (
+          {roasting && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center px-6"
+              className="absolute top-[26%] inset-x-0 text-center px-6"
             >
-              <h2 className="text-6xl font-black text-red-500 uppercase tracking-tight drop-shadow-xl">Dropped</h2>
-              {phase === "failed" && (
-                <>
-                  <p className="mt-2 text-lg font-bold">
-                    Catches this run: <span className="text-amber-300">{score}</span>
-                  </p>
-                  <p className="text-sm text-white/70">Best run {best}</p>
-                  <p className="mt-4 text-sm font-semibold tracking-wide uppercase text-white/90">Tap to retry</p>
-                </>
-              )}
+              <h2
+                className="text-5xl font-black text-red-500 uppercase tracking-tight drop-shadow-xl"
+                style={{ WebkitTextStroke: "1px #450a0a" }}
+              >
+                Dropped
+              </h2>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {phase === "failed" && (
+        <div className="absolute inset-x-0 top-[38%] z-40 flex flex-col items-center pointer-events-none">
+          <ShareCard still={shareStill} score={score} />
+          <p className="mt-3 text-[11px] font-semibold tracking-wide uppercase text-white/90 pointer-events-none">
+            Tap to retry
+          </p>
+        </div>
+      )}
 
       <AnimatePresence>
         {settingsOpen && (
