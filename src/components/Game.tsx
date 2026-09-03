@@ -306,7 +306,10 @@ export function Game() {
   const showDrop = phase === "dropping" || phase === "failed";
 
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-black text-white select-none touch-none">
+    <div
+      className="relative w-full h-[100dvh] overflow-hidden bg-black text-white select-none touch-none"
+      data-catch-window={`${WINDOW_START.toFixed(1)}-${WINDOW_END.toFixed(1)}`}
+    >
       <div className="absolute inset-0 z-0">
         {useSim ? (
           <BeachSimulation
