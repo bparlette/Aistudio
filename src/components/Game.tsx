@@ -5,7 +5,9 @@ import { BeachSimulation } from "./BeachSimulation";
 import { CatchJuice } from "./CatchJuice";
 import { FakeChat } from "./FakeChat";
 import { LiveReactions } from "./LiveReactions";
+import { ShareCard } from "./ShareCard";
 import { rankForScore } from "../lib/ranks";
+import { captureVideoFrame } from "../lib/share";
 import { sound } from "../lib/audio";
 import {
   assetUrl,
@@ -56,6 +58,8 @@ export function Game() {
   const [simProgress, setSimProgress] = useState(0);
   const [showTapNow, setShowTapNow] = useState(false);
   const [juicing, setJuicing] = useState(false);
+  const [shareStill, setShareStill] = useState<string | null>(null);
+  const helmetStillRef = useRef<string | null>(null);
 
   const catchRef = useRef<HTMLVideoElement | null>(null);
   const dropRef = useRef<HTMLVideoElement | null>(null);
@@ -151,6 +155,7 @@ export function Game() {
     scoreRef.current = 0;
     tapArmedRef.current = false;
     setJuicing(false);
+    setShareStill(null);
     beginRound(1, 480);
   }, [beginRound]);
 
@@ -183,7 +188,10 @@ export function Game() {
       } catch {
         /* ignore seek race */
       }
+      const sand = captureVideoFrame(drop);
+      if (sand && !helmetStillRef.current) helmetStillRef.current = sand;
     }
+    setShareStill(helmetStillRef.current);
     setPhaseBoth("failed");
   }, []);
 
@@ -474,6 +482,15 @@ export function Game() {
       />
       <CatchJuice juicing={juicing} caught={phase === "caught"} />
 
+      {phase === "failed" && (
+        <div className="absolute inset-x-0 top-[40%] z-40 flex flex-col items-center pointer-events-none">
+          <ShareCard still={shareStill} score={score} />
+          <p className="mt-3 text-[11px] font-semibold tracking-wide uppercase text-white/90 pointer-events-none">
+            Tap anywhere to retry
+          </p>
+        </div>
+      )}
+
       <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
         <AnimatePresence>
           {phase === "idle" && (
@@ -509,23 +526,19 @@ export function Game() {
         </AnimatePresence>
 
         <AnimatePresence>
-          {(phase === "dropping" || phase === "failed") && (
+          {roasting && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center px-6"
+              className="absolute top-[26%] inset-x-0 text-center px-6"
             >
-              <h2 className="text-6xl font-black text-red-500 uppercase tracking-tight drop-shadow-xl">Dropped</h2>
-              {phase === "failed" && (
-                <>
-                  <p className="mt-2 text-lg font-bold">
-                    Catches this run: <span className="text-amber-300">{score}</span>
-                  </p>
-                  <p className="text-sm text-white/70">Best run {best}</p>
-                  <p className="mt-4 text-sm font-semibold tracking-wide uppercase text-white/90">Tap to retry</p>
-                </>
-              )}
+              <h2
+                className="text-5xl font-black text-red-500 uppercase tracking-tight drop-shadow-xl"
+                style={{ WebkitTextStroke: "1px #450a0a" }}
+              >
+                Dropped
+              </h2>
             </motion.div>
           )}
         </AnimatePresence>
