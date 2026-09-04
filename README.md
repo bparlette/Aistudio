@@ -22,6 +22,8 @@ Scores this run and your **best run** are stored in `localStorage` (`beachCatchB
 | `public/game-video.mp4` | **Playable live-stream.** 730×1320 H.264, 60fps, 5.96s, ~1.9MB. |
 | `public/game-video.mov` | iPhone original (1320×730 + 90° rotation). **Not** the playable source. |
 | `public/drop-video.mp4` | Generated miss insert. Freeze of the pre-catch reach + composited ball slip / sand hit. |
+| `public/og.jpg` | Portrait still (~1080 wide) at ~0.4s — sprint toward camera. |
+| `public/og-card.jpg` | 1200×630 landscape crop for `og:image` / `twitter:image`. |
 
 Do not use the `.mov` in `<video>` — Safari/Chrome often show it sideways.
 
