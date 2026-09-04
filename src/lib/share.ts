@@ -1,4 +1,5 @@
-import { PLAY_URL, type Rank } from "./ranks";
+import { type Rank } from "./ranks";
+import { getVariant } from "./variant";
 
 export function captureVideoFrame(video: HTMLVideoElement): string | null {
   if (!video.videoWidth) return null;
@@ -60,10 +61,12 @@ export async function composeShareCard(
   ctx.fillStyle = fade;
   ctx.fillRect(0, 0, w, h);
 
+  const variant = getVariant();
+
   ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.font = "700 22px system-ui, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("BEACH CATCH LIVE", w / 2, 72);
+  ctx.fillText(variant.title.toUpperCase(), w / 2, 72);
 
   const title = rank?.name ?? "Unsigned";
   ctx.fillStyle = "#fbbf24";
@@ -80,7 +83,7 @@ export async function composeShareCard(
 
   ctx.fillStyle = "rgba(255,255,255,0.55)";
   ctx.font = "600 18px system-ui, sans-serif";
-  ctx.fillText(PLAY_URL.replace("https://", ""), w / 2, h - 48);
+  ctx.fillText(variant.playUrl.replace("https://", ""), w / 2, h - 48);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("blob"))), "image/jpeg", 0.88);
@@ -96,7 +99,7 @@ export async function shareRun(opts: {
   let file: File | undefined;
   try {
     const blob = await composeShareCard(opts.still, opts.score, opts.rank);
-    file = new File([blob], "beach-catch.jpg", { type: "image/jpeg" });
+    file = new File([blob], "catch-share.jpg", { type: "image/jpeg" });
   } catch {
     file = undefined;
   }
@@ -104,10 +107,11 @@ export async function shareRun(opts: {
   const nav = navigator as Navigator & {
     canShare?: (data: ShareData) => boolean;
   };
+  const variant = getVariant();
   const shareData: ShareData = {
-    title: "Beach Catch Live",
+    title: variant.title,
     text: opts.text,
-    url: PLAY_URL,
+    url: variant.playUrl,
   };
 
   await copyText(opts.text);

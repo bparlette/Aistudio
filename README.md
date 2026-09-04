@@ -4,6 +4,8 @@ Phone web game that plays like a live stream of a fake-49ers-player beach catch.
 
 **Play:** [https://bparlette.github.io/Aistudio/](https://bparlette.github.io/Aistudio/)
 
+**BenDaDonnn Catch:** [https://bparlette.github.io/Aistudio/BenDaDonnn/](https://bparlette.github.io/Aistudio/BenDaDonnn/) — same tap-to-catch game, new 3.0s clip. Catch window **2.0–2.5s**.
+
 ## How to play
 
 1. Open the URL on a phone (portrait). The clip is the graphics.
@@ -20,6 +22,8 @@ Scores this run and your **best run** are stored in `localStorage` (`beachCatchB
 | `public/game-video.mp4` | **Playable live-stream.** 730×1320 H.264, 60fps, 5.96s, ~1.9MB. |
 | `public/game-video.mov` | iPhone original (1320×730 + 90° rotation). **Not** the playable source. |
 | `public/drop-video.mp4` | Generated miss insert. Freeze of the pre-catch reach + composited ball slip / sand hit. |
+| `public/BenDaDonnn/game-video.mp4` | **BenDaDonnn clip.** 1320×1718 H.264, 59.94fps, 3.00s. |
+| `public/BenDaDonnn/og-bendadonnn.jpg` | 1200×630 landscape OG from the charging-camera still. |
 
 Do not use the `.mov` in `<video>` — Safari/Chrome often show it sideways.
 
@@ -50,6 +54,8 @@ Video stays **muted by default** (clip audio talks over the play). Unmute is the
 Static Vite build on **GitHub Pages**. Production files are on the `gh-pages` branch.
 
 - **Live URL:** [https://bparlette.github.io/Aistudio/](https://bparlette.github.io/Aistudio/)
+- **BenDaDonnn:** [https://bparlette.github.io/Aistudio/BenDaDonnn/](https://bparlette.github.io/Aistudio/BenDaDonnn/) (`BenDaDonnn/index.html` Vite entry; same app, path-selected clip + window)
+- **X share URL (original):** [https://bparlette.github.io/Aistudio/play.html](https://bparlette.github.io/Aistudio/play.html)
 - Build base path: `/Aistudio/`
 - Workflow (after merge to `main`): `.github/workflows/deploy-pages.yml`
 

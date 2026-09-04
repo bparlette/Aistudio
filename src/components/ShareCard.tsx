@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { rankForScore, tweetForRun } from "../lib/ranks";
 import { shareRun } from "../lib/share";
+import { getVariant } from "../lib/variant";
 
 export function ShareCard({
   still,
@@ -10,6 +11,7 @@ export function ShareCard({
   still: string | null;
   score: number;
 }) {
+  const variant = getVariant();
   const rank = rankForScore(score);
   const title = rank?.name ?? "Unsigned";
   const [status, setStatus] = useState<"idle" | "shared" | "copied">("idle");
@@ -44,7 +46,7 @@ export function ShareCard({
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
       <div className="absolute inset-x-0 bottom-0 p-2.5 text-center">
-        <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/70">Beach Catch</p>
+        <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/70">{variant.shortTitle}</p>
         <p className="text-[15px] font-black uppercase leading-tight text-amber-300">{title}</p>
         <p className="text-[12px] font-extrabold text-white tabular-nums">{score} streak</p>
         <p className="text-[11px] font-black uppercase tracking-wider text-red-300 mt-0.5">beat this</p>
