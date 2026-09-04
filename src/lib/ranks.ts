@@ -1,4 +1,4 @@
-export const PLAY_URL = "https://bparlette.github.io/Aistudio/play.html";
+export const PLAY_URL = "https://bparlette.github.io/Aistudio/tap.html";
 
 export type Rank = {
   min: number;
