@@ -34,10 +34,19 @@ function emitShareHtml(): Plugin {
         path.resolve(__dirname, "dist/play.html"),
         source.replace(needle, `property="og:url" content="${PLAY_PAGE_URL}"`),
       );
-      fs.writeFileSync(
-        path.resolve(__dirname, "dist/tap.html"),
-        source.replace(needle, `property="og:url" content="${TAP_PAGE_URL}"`),
-      );
+      // tap.html is the X cache-bust URL: same-origin og-x.jpg + twitter:site
+      const tap = source
+        .replace(needle, `property="og:url" content="${TAP_PAGE_URL}"`)
+        .replaceAll("og-preview.jpg", "og-x.jpg")
+        .replace(
+          `<meta name="twitter:card" content="summary_large_image" />`,
+          `<meta name="twitter:card" content="summary_large_image" />\n    <meta name="twitter:site" content="@bparlette1" />`,
+        )
+        .replace(
+          "https://cdn.jsdelivr.net/gh/bparlette/Aistudio@gh-pages/og-x.jpg",
+          "https://bparlette.github.io/Aistudio/og-x.jpg",
+        );
+      fs.writeFileSync(path.resolve(__dirname, "dist/tap.html"), tap);
     },
   };
 }
