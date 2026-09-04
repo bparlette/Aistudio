@@ -1,3 +1,5 @@
+import { getVariant } from "./variant";
+
 export const PLAY_URL = "https://bparlette.github.io/Aistudio/";
 
 export type Rank = {
@@ -22,6 +24,7 @@ export function rankForScore(score: number): Rank | null {
 }
 
 export function tweetForRun(score: number, rank: Rank | null): string {
+  const variant = getVariant();
   const title = rank?.name ?? "Unsigned";
-  return `${title}. ${score} streak. Beat this.\n\nBeach Catch Live\n${PLAY_URL}`;
+  return `${title}. ${score} streak. Beat this.\n\n${variant.title}\n${variant.playUrl}`;
 }

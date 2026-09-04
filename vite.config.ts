@@ -4,6 +4,10 @@ import fs from "fs";
 import path from "path";
 import { defineConfig, Plugin } from "vite";
 
+const INDEX_PAGE_URL = "https://bparlette.github.io/Aistudio/";
+const PLAY_PAGE_URL = "https://bparlette.github.io/Aistudio/play.html";
+const TAP_PAGE_URL = "https://bparlette.github.io/Aistudio/tap.html";
+
 function omitIphoneMov(): Plugin {
   return {
     name: "omit-iphone-mov",
@@ -14,13 +18,45 @@ function omitIphoneMov(): Plugin {
   };
 }
 
+/** Copy index.html to play.html / tap.html so share scrapers get an uncached URL. */
+function emitShareHtml(): Plugin {
+  return {
+    name: "emit-share-html",
+    closeBundle() {
+      const index = path.resolve(__dirname, "dist/index.html");
+      if (!fs.existsSync(index)) return;
+      const source = fs.readFileSync(index, "utf8");
+      const needle = `property="og:url" content="${INDEX_PAGE_URL}"`;
+      if (!source.includes(needle)) {
+        throw new Error("emit-share-html: og:url on index.html did not match");
+      }
+      fs.writeFileSync(
+        path.resolve(__dirname, "dist/play.html"),
+        source.replace(needle, `property="og:url" content="${PLAY_PAGE_URL}"`),
+      );
+      fs.writeFileSync(
+        path.resolve(__dirname, "dist/tap.html"),
+        source.replace(needle, `property="og:url" content="${TAP_PAGE_URL}"`),
+      );
+    },
+  };
+}
+
 export default defineConfig(({ command, isPreview }) => ({
   // Project Pages URL: https://bparlette.github.io/Aistudio/
   base: command === "build" || isPreview ? "/Aistudio/" : "/",
-  plugins: [react(), tailwindcss(), omitIphoneMov()],
+  plugins: [react(), tailwindcss(), omitIphoneMov(), emitShareHtml()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "."),
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        BenDaDonnn: path.resolve(__dirname, "BenDaDonnn/index.html"),
+      },
     },
   },
   server: {

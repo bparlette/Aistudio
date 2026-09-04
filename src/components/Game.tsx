@@ -9,26 +9,23 @@ import { ShareCard } from "./ShareCard";
 import { rankForScore } from "../lib/ranks";
 import { captureVideoFrame } from "../lib/share";
 import { sound } from "../lib/audio";
-import {
-  assetUrl,
-  BEST_SCORE_KEY,
-  CATCH_VIDEO,
-  DROP_CUT_IN,
-  DROP_VIDEO,
-  IDLE_LOOP_END,
-  LOOP_DURATION,
-  SPEED_CAP,
-  SPEED_STEP,
-  WINDOW_END,
-  WINDOW_START,
-} from "../lib/timing";
+import { assetUrl, SPEED_CAP, SPEED_STEP } from "../lib/timing";
+import { getVariant } from "../lib/variant";
+
+const variant = getVariant();
+const BEST_SCORE_KEY = variant.bestScoreKey;
+const WINDOW_START = variant.windowStart;
+const WINDOW_END = variant.windowEnd;
+const LOOP_DURATION = variant.loopDuration;
+const IDLE_LOOP_END = variant.idleLoopEnd;
+const DROP_CUT_IN = variant.dropCutIn;
 
 const JUICE_MS = 400;
 
 type Phase = "idle" | "playing" | "caught" | "dropping" | "failed";
 
-const CATCH_SRC = assetUrl(CATCH_VIDEO);
-const DROP_SRC = assetUrl(DROP_VIDEO);
+const CATCH_SRC = assetUrl(variant.catchVideo);
+const DROP_SRC = variant.dropVideo ? assetUrl(variant.dropVideo) : "";
 
 function loadBest(): number {
   try {
@@ -81,6 +78,10 @@ export function Game() {
   };
 
   useEffect(() => {
+    document.title = variant.title;
+  }, []);
+
+  useEffect(() => {
     scoreRef.current = score;
   }, [score]);
 
@@ -103,7 +104,7 @@ export function Game() {
     v.muted = muted;
     v.playsInline = true;
     v.play().catch(() => {});
-    if (dropRef.current) dropRef.current.muted = muted;
+    if (variant.dropVideo && dropRef.current) dropRef.current.muted = muted;
   }, [useSim, muted]);
 
   useEffect(() => {
@@ -180,7 +181,7 @@ export function Game() {
 
   const holdDropFrame = useCallback(() => {
     const drop = dropRef.current;
-    if (drop) {
+    if (drop && variant.dropVideo) {
       drop.pause();
       const hold = Math.max(0, (Number.isFinite(drop.duration) ? drop.duration : 1.45) - 0.05);
       try {
@@ -203,7 +204,17 @@ export function Game() {
     setViewers((n) => Math.max(420, n - (320 + Math.floor(Math.random() * 280))));
     setPhaseBoth("dropping");
     const live = catchRef.current;
-    if (live) live.pause();
+    if (live) {
+      live.pause();
+      const sand = captureVideoFrame(live);
+      if (sand) helmetStillRef.current = sand;
+    }
+    if (!variant.dropVideo) {
+      if (dropHoldTimerRef.current) window.clearTimeout(dropHoldTimerRef.current);
+      dropHoldTimerRef.current = window.setTimeout(holdDropFrame, 280);
+      if (!muted) sound.playDrop();
+      return;
+    }
     const drop = dropRef.current;
     if (drop) {
       drop.currentTime = 0;
@@ -256,8 +267,14 @@ export function Game() {
     progressRef.current = t;
     const p = phaseRef.current;
 
-    if (p === "idle" && t >= IDLE_LOOP_END) {
-      v.currentTime = 0;
+    if (p === "idle") {
+      if (t >= variant.idleStillStart && t <= variant.idleStillEnd) {
+        const shot = captureVideoFrame(v);
+        if (shot) helmetStillRef.current = shot;
+      }
+      if (t >= IDLE_LOOP_END) {
+        v.currentTime = 0;
+      }
       return;
     }
 
@@ -355,13 +372,15 @@ export function Game() {
     };
   }, [useSim, phase, beginRound, startDrop]);
 
-  const showDrop = phase === "dropping" || phase === "failed";
-  const roasting = showDrop;
+  const showDrop = Boolean(DROP_SRC) && (phase === "dropping" || phase === "failed");
+  const roasting = phase === "dropping" || phase === "failed";
   const rank = rankForScore(score);
 
   return (
     <div
       className="relative w-full h-[100dvh] overflow-hidden bg-black text-white select-none touch-none"
+      data-variant={variant.id}
+      data-catch-src={variant.catchVideo}
       data-catch-window={`${WINDOW_START.toFixed(1)}-${WINDOW_END.toFixed(1)}`}
     >
       <div className="absolute inset-0 z-0">
@@ -390,15 +409,17 @@ export function Game() {
               onEnded={onCatchEnded}
               onError={() => setUseSim(true)}
             />
-            <video
-              ref={dropRef}
-              src={DROP_SRC}
-              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[124%] h-[124%] max-w-none object-cover ${showDrop ? "opacity-100" : "opacity-0"}`}
-              playsInline
-              muted={muted}
-              preload="auto"
-              onEnded={onDropEnded}
-            />
+            {DROP_SRC ? (
+              <video
+                ref={dropRef}
+                src={DROP_SRC}
+                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[124%] h-[124%] max-w-none object-cover ${showDrop ? "opacity-100" : "opacity-0"}`}
+                playsInline
+                muted={muted}
+                preload="auto"
+                onEnded={onDropEnded}
+              />
+            ) : null}
           </motion.div>
         )}
         <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
@@ -424,12 +445,12 @@ export function Game() {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-[13px] truncate">49ersBeachCatcher</span>
+              <span className="font-semibold text-[13px] truncate">{variant.handle}</span>
               <span className="text-[10px] font-bold bg-white/15 px-1.5 py-0.5 rounded-md leading-none">
                 Follow
               </span>
             </div>
-            <p className="text-[10px] text-white/70 truncate">Ocean Beach</p>
+            <p className="text-[10px] text-white/70 truncate">{variant.location}</p>
           </div>
         </div>
 
@@ -500,7 +521,7 @@ export function Game() {
               exit={{ opacity: 0 }}
               className="absolute top-[42%] inset-x-0 text-center px-6"
             >
-              <p className="text-[11px] tracking-[0.25em] uppercase text-white/70 mb-1">Live · Beach Catch</p>
+              <p className="text-[11px] tracking-[0.25em] uppercase text-white/70 mb-1">Live · {variant.shortTitle}</p>
               <p className="text-xl font-black uppercase tracking-wide drop-shadow-lg">Tap to play along</p>
             </motion.div>
           )}
