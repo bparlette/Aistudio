@@ -4,6 +4,8 @@ Phone web game that plays like a live stream of a fake-49ers-player beach catch.
 
 **Play:** [https://bparlette.github.io/Aistudio/](https://bparlette.github.io/Aistudio/)
 
+**Share on X:** [https://bparlette.github.io/Aistudio/play.html](https://bparlette.github.io/Aistudio/play.html) — same game, uncached path so X can fetch the card. Do not reuse an old `/Aistudio/` compose bubble.
+
 ## How to play
 
 1. Open the URL on a phone (portrait). The clip is the graphics.
@@ -22,7 +24,7 @@ Scores this run and your **best run** are stored in `localStorage` (`beachCatchB
 | `public/game-video.mp4` | **Playable live-stream.** 730×1320 H.264, 60fps, 5.96s, ~1.9MB. |
 | `public/game-video.mov` | iPhone original (1320×730 + 90° rotation). **Not** the playable source. |
 | `public/drop-video.mp4` | Generated miss insert. Freeze of the pre-catch reach + composited ball slip / sand hit. |
-| `public/og-preview.jpg` | **Link preview.** 1200×630 landscape JPEG at ~0.4s (runner at camera). Single `og:image`. |
+| `public/og-preview.jpg` | **Link preview.** 1200×630 landscape JPEG at ~0.4s (runner at camera). `og:image` on github.io; `twitter:image` on jsDelivr. |
 | `public/og.jpg` | Portrait still (~1080 wide) at ~0.4s — not used in `<head>`. |
 | `public/og-card.jpg` | Previous 1200×630 crop — not used in `<head>` (Apple caches old URL). |
 
@@ -55,6 +57,7 @@ Video stays **muted by default** (clip audio talks over the play). Unmute is the
 Static Vite build on **GitHub Pages**. Production files are on the `gh-pages` branch.
 
 - **Live URL:** [https://bparlette.github.io/Aistudio/](https://bparlette.github.io/Aistudio/)
+- **X share URL:** [https://bparlette.github.io/Aistudio/play.html](https://bparlette.github.io/Aistudio/play.html) (`dist/play.html` is copied from `index.html` after build)
 - Build base path: `/Aistudio/`
 - Workflow (after merge to `main`): `.github/workflows/deploy-pages.yml`
 
