@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#0a0a0c"/>
+  <path d="M8 30c0-16 48-16 48 0v10H8z" fill="#c8ff00"/>
+  <rect x="10" y="30" width="44" height="10" fill="#111"/>
+  <path d="M28 10h8v16h-8z" fill="#ff2d95"/>
+  <text x="32" y="58" text-anchor="middle" font-size="10" font-family="Impact" fill="#c8ff00">LID</text>
+</svg>
