@@ -1,0 +1,23 @@
+# Clout Ranch — Wally stub (offline-friendly)
+#
+# ProfileStore is NOT on the official Mad Studio Wally feed. Community forks
+# exist but we do NOT pin them (supply-chain risk for player data).
+# Source of truth stays vendored:
+#   src/ReplicatedStorage/Packages/ProfileStore.lua
+#   (MadStudioRoblox/ProfileStore raw main → .lua; see docs/BLUEPRINT_ADOPTIONS.md)
+#
+# When Mad Studio publishes an official package, pin it under [server-dependencies]
+# and migrate off the vendor copy. Until then: `wally install` is a no-op deps-wise.
+
+[package]
+name = "clout-ranch/rojo"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+description = "Clout Ranch Rojo tree — Wally stub; ProfileStore vendored under Packages/"
+
+[dependencies]
+# (none — client shared packages deferred; React-Roblox later)
+
+[server-dependencies]
+# ProfileStore = "<official>/profilestore@x.y.z"  -- DEFERRED until Mad Studio publishes

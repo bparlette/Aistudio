@@ -1,0 +1,33 @@
+# pre-alpha-funnel-ui-1 — SUMMARY (notes re-spot)
+
+**Date:** 2026-09-04 (America/New_York)
+**Pack:** /workspace/funnel-ui-1-notes.tgz
+**Scope:** Consolidate SoftOffer + SoftFunnel double-listener → ONE client funnel modal owner.
+
+## Done (this notes pack)
+
+1. SoftOffer.lua = sole SoftOffer remote modal owner (VIP lock-time note + 8s auto-hide merged in).
+2. SoftFunnel.lua = deprecated no-op stub (no OnClientEvent, no UI).
+3. ClientHud mounts SoftOffer only.
+4. OfferService FireClient once to Remotes.SoftOffer (unchanged path; clarified comment).
+
+## Rails (unchanged)
+
+- ID 0 → Coming soon, no Prompt*
+- VIP = lock time only (not idle); VIP ∉ idle mult
+- Post-MarkDopamine timing; no invent IDs; no endsAt; no X/Twitter/TikTok
+
+## Files in this pack
+
+- src/StarterPlayer/StarterPlayerScripts/HudModules/SoftOffer.lua
+- src/StarterPlayer/StarterPlayerScripts/HudModules/SoftFunnel.lua
+- src/StarterPlayer/StarterPlayerScripts/ClientHud.client.lua
+- src/ServerScriptService/Services/OfferService.lua
+- docs/NOTES_pre-alpha-funnel-ui-1.md
+- docs/FUNNEL_UI_ZERO_IDS.md
+- SUMMARY.txt
+
+## CloutDev re-spot
+
+1. One SoftOffer OnClientEvent bind (SoftOffer.lua only).
+2. One modal on FireClient; Coming soon @ ID 0; VIP lock-time status; no double overlay.

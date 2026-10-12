@@ -1,0 +1,9 @@
+{
+  "className": "Model",
+  "ignoreUnknownInstances": true,
+  "attributes": {
+    "PlotIndex": 5,
+    "BakedOnDisk": true,
+    "DensePad": true
+  }
+}

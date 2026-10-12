@@ -1,0 +1,37 @@
+{
+  "className": "SpawnLocation",
+  "properties": {
+    "Anchored": true,
+    "CanCollide": true,
+    "Size": [
+      6,
+      1,
+      6
+    ],
+    "Neutral": true,
+    "Duration": 0,
+    "Transparency": 0.25,
+    "Material": "Neon",
+    "Color": [
+      1,
+      1,
+      0
+    ],
+    "CFrame": [
+      13.856406,
+      1.5,
+      -8.0,
+      0.5,
+      0.0,
+      -0.866025,
+      -0.0,
+      1.0,
+      -0.0,
+      0.866025,
+      0.0,
+      0.5
+    ],
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth"
+  }
+}

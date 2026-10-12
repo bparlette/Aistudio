@@ -1,0 +1,34 @@
+{
+  "className": "Part",
+  "properties": {
+    "Anchored": true,
+    "CanCollide": true,
+    "Size": [
+      40,
+      1.2,
+      40
+    ],
+    "Material": "Grass",
+    "Color": [
+      0.5882352941176471,
+      0.7450980392156863,
+      1.0
+    ],
+    "CFrame": [
+      48.497423,
+      0.6,
+      -28.0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ],
+    "TopSurface": "Smooth",
+    "BottomSurface": "Smooth"
+  }
+}

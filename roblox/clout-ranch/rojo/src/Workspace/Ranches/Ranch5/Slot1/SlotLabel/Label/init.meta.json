@@ -1,0 +1,33 @@
+{
+  "className": "TextLabel",
+  "properties": {
+    "Size": {
+      "UDim2": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ]
+    },
+    "BackgroundTransparency": 1,
+    "Font": "GothamBold",
+    "TextSize": 18,
+    "TextColor3": [
+      1.0,
+      0.9647058823529412,
+      0.8784313725490196
+    ],
+    "TextStrokeColor3": [
+      0.9607843137254902,
+      0.7843137254901961,
+      0.29411764705882354
+    ],
+    "TextStrokeTransparency": 0.2,
+    "Text": "SLOT 1",
+    "TextScaled": false
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "className": "BillboardGui",
+  "properties": {
+    "Size": {
+      "UDim2": [
+        [
+          0,
+          260
+        ],
+        [
+          0,
+          44
+        ]
+      ]
+    },
+    "StudsOffset": {
+      "Vector3": [
+        0,
+        4,
+        0
+      ]
+    },
+    "AlwaysOnTop": true,
+    "MaxDistance": 280,
+    "Enabled": true
+  }
+}

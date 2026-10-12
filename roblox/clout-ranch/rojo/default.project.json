@@ -1,0 +1,47 @@
+{
+  "name": "CloutRanch",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Modules": {
+        "$className": "Folder",
+        "$path": "src/ReplicatedStorage/Modules"
+      },
+      "Packages": {
+        "$className": "Folder",
+        "$path": "src/ReplicatedStorage/Packages"
+      },
+      "Config": {
+        "$className": "Folder",
+        "$path": "src/ReplicatedStorage/Config"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Services": {
+        "$className": "Folder",
+        "$path": "src/ServerScriptService/Services"
+      },
+      "ServerBootstrap": {
+        "$path": "src/ServerScriptService/ServerBootstrap.server.lua"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "$ignoreUnknownInstances": true,
+      "Ranches": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        "$path": "src/Workspace/Ranches"
+      }
+    }
+  }
+}

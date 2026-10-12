@@ -1,0 +1,6 @@
+# Clout Ranch — Aftman tool pins (run: aftman install)
+[tools]
+rojo = "rojo-rbx/rojo@7.4.4"
+selene = "Kampfkarren/selene@0.31.0"
+stylua = "JohnnyMorganz/stylua@2.5.2"
+wally = "UpliftGames/wally@0.3.2"

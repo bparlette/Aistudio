@@ -1,0 +1,15 @@
+std = "roblox"
+
+[config]
+# Empty = use selene defaults for roblox std
+
+[lints]
+# Overnight codebase uses require()+shared Modules; keep noise low.
+global_usage = "allow"
+multiple_statements = "allow"
+incorrect_standard_library_use = "warn"
+unused_variable = "warn"
+shadowing = "warn"
+empty_if = "warn"
+if_same_then_else = "warn"
+unbalanced_assignments = "warn"
